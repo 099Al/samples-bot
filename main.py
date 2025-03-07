@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram_dialog import setup_dialogs
 from dotenv import load_dotenv
 from aiogram.client.bot import DefaultBotProperties
@@ -14,6 +15,7 @@ from config import TOKEN_ID
 
 import logging
 
+from handlers.common import routers_list
 from handlers.sample.start import start_router
 
 logger = logging.getLogger(__name__)
@@ -28,13 +30,17 @@ async def on_user_joined(event: ChatMemberUpdated, bot: Bot):
 async def start():
 
     bot = Bot(token=TOKEN_ID, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher()
 
+    # storage = MemoryStorage()
+    # dp = Dispatcher(storage=storage)
+
+    dp = Dispatcher()
 
     # db = DataBase()
     # await db.create_db()
 
     dp.include_router(start_router)
+    routers_list(dp)           # Регистрация списка роутеров  вынесена в отдельный модуль
 
 
     await dp.start_polling(bot, skip_updates=True)
