@@ -1,0 +1,33 @@
+TOKEN_ID =
+#SQL_DB = 'sqlite+aiosqlite:///db.sqlite3'
+SQL_DB = 'sqlite+aiosqlite:///D:\WorkSpaces\PythonWs\shop\db.sqlite3'
+#если SQL_DB не указан, то берется след connect
+
+TOKEN_YOUKASSA = '381764678:TEST:89279'
+
+
+SUPER_ADMIN_ID='988269770'
+BOT_ID = '7196118420'
+
+
+#connect to VM pg 16 via tunnel
+#для запуска над запустить putty (load vm настройка)
+#и добавить ключ в pgagent
+#HOST = 'localhost'
+#PORT = 5401
+#DB = 'shop'
+#USER = 'postgres'
+#PASS = 'pass'
+#ENGINE = 'postgresql+asyncpg'
+
+#connect to WSL pg 16
+#для запуска надо запустить >wsl докер сам поднимется
+HOST='localhost'
+PORT=5436
+DB='shop'
+USER='postgres'
+PASS='pass'
+ENGINE='postgresql+asyncpg'
+
+
+# message.chat.id = 988269770
