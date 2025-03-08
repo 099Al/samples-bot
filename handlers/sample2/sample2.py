@@ -67,5 +67,8 @@ async def step_4(event: [CallbackQuery, Message], bot: Bot, state: FSMContext):
             await event.bot.send_message(event.from_user.id, "Вы нажали кнопку")
         elif isinstance(event, Message):
             await event.bot.send_message(event.from_user.id, event.text)
+
+        await state.clear()
+
     except Exception as e:
        logging.error(f"Error in step_4: {e}")
