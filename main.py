@@ -14,7 +14,10 @@ from config import TOKEN_ID
 from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
 
+#REDIS второй вариант подключения
+#import aioredis
 
+dp: Dispatcher = Dispatcher(storage=storage)
 
 import logging
 
@@ -37,7 +40,12 @@ async def start():
 
     #storage = MemoryStorage()
     redis = Redis(host='localhost')
-    storage = RedisStorage(redis=redis)
+
+    #2й вариант подключения
+    #redis = await aioredis.from_url("redis://localhost:6379", db=1)
+
+    storage: RedisStorage = RedisStorage(redis=redis)
+
 
 
     dp = Dispatcher(storage=storage)
