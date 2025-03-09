@@ -1,7 +1,6 @@
 import asyncio
 import os
 
-from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram_dialog import setup_dialogs
 from dotenv import load_dotenv
 from aiogram.client.bot import DefaultBotProperties
@@ -10,6 +9,10 @@ from aiogram import Dispatcher, Bot
 from aiogram.types import ChatMemberUpdated, ChatMember
 from config import TOKEN_ID
 
+#REDIS
+#from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
+from redis.asyncio import Redis
 
 
 
@@ -32,8 +35,12 @@ async def start():
 
     bot = Bot(token=TOKEN_ID, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
-    # storage = MemoryStorage()
-    # dp = Dispatcher(storage=storage)
+    #storage = MemoryStorage()
+    redis = Redis(host='localhost')
+    storage = RedisStorage(redis=redis)
+
+
+    dp = Dispatcher(storage=storage)
 
     dp = Dispatcher()
 
