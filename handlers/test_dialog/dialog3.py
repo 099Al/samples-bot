@@ -4,7 +4,8 @@ from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram_dialog import DialogManager, StartMode, Dialog, Window
 from aiogram_dialog.widgets.kbd import Select, Group, Button, Back, Cancel
 from aiogram_dialog.widgets.text import Format, Const
@@ -37,6 +38,9 @@ def _get_elem_by_id(id) -> list[int]:
             return elem["val"]
 
 
+# ---------------------Handler States-------------------
+class HandlerState(StatesGroup):
+    state_init = State()
 # -------------------- Dialog States --------------------
 
 class DialogStateA(StatesGroup):
@@ -49,7 +53,26 @@ class DialogStateB(StatesGroup):
 
 # -------------------- Command Handlers --------------------
 
+async def kb_button():
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="Start Dialog A", callback_data="start_dialog_a"))
+    kb.add(InlineKeyboardButton(text="Empty Button", callback_data="empty_button"))
+
+    kb.adjust(1)
+    return kb.as_markup(resize_keyboard=True)
+
+
+
 @dialog3_router.message(Command('dialog3'))
+async def start(message: Message, state: FSMContext):
+    try:
+        await message.answer("Начало", reply_markup=await kb_button())
+        await state.set_state(HandlerState.state_init)
+    except Exception as e:
+        logging.error(f"Error in start: {e}")
+
+
+@dialog3_router.callback_query(HandlerState.state_init)
 async def start_dialog_a(event, bot: Bot, state: FSMContext, dialog_manager: DialogManager):
     try:
         req = ReqA()
@@ -61,6 +84,9 @@ async def start_dialog_a(event, bot: Bot, state: FSMContext, dialog_manager: Dia
         )
     except Exception as e:
         logging.error(f"Error in start_dialog_a: {e}")
+
+
+
 
 
 # -------------------- Dialog A Handlers --------------------
