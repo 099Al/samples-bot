@@ -52,7 +52,7 @@ async def button1_clicked(callback: CallbackQuery, button: Button, manager: Dial
     await manager.next()
 
 
-dialog_tst_1 = Dialog(
+dialog_2 = Dialog(
 
     Window(
         Format("Window 1, {name}"),
