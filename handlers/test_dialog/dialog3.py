@@ -41,8 +41,9 @@ def _get_elem_by_id(id) -> list[int]:
 # ---------------------Handler States-------------------
 class HandlerState(StatesGroup):
     state_init = State()
-# -------------------- Dialog States --------------------
 
+
+# -------------------- Dialog States --------------------
 class DialogStateA(StatesGroup):
     categories = State()
     elements = State()
@@ -57,23 +58,26 @@ async def kb_button():
     kb = InlineKeyboardBuilder()
     kb.add(InlineKeyboardButton(text="Start Dialog A", callback_data="start_dialog_a"))
     kb.add(InlineKeyboardButton(text="Empty Button", callback_data="empty_button"))
-
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
 
-
 @dialog3_router.message(Command('dialog3'))
 async def start(message: Message, state: FSMContext):
-    try:
-        await message.answer("Начало", reply_markup=await kb_button())
-        await state.set_state(HandlerState.state_init)
-    except Exception as e:
-        logging.error(f"Error in start: {e}")
+    await message.answer("Начало", reply_markup=await kb_button())
+    await state.set_state(HandlerState.state_init)
 
 
 @dialog3_router.callback_query(HandlerState.state_init)
-async def start_dialog_a(event, bot: Bot, state: FSMContext, dialog_manager: DialogManager):
+async def handle_callback(callback: CallbackQuery, bot: Bot, state: FSMContext, dialog_manager: DialogManager):
+    if callback.data == "start_dialog_a":
+        await start_dialog_a(callback, bot, state, dialog_manager)
+        await state.clear()   #без этого условия кнопки в след диалоге будут попадать в этот хендлер
+    else:
+        await callback.answer("This button does nothing.")
+
+
+async def start_dialog_a(callback: CallbackQuery, bot: Bot, state: FSMContext, dialog_manager: DialogManager):
     try:
         req = ReqA()
         l_items = await req.get_all()
@@ -84,9 +88,7 @@ async def start_dialog_a(event, bot: Bot, state: FSMContext, dialog_manager: Dia
         )
     except Exception as e:
         logging.error(f"Error in start_dialog_a: {e}")
-
-
-
+        await callback.answer("An error occurred. Please try again.")
 
 
 # -------------------- Dialog A Handlers --------------------
@@ -95,11 +97,12 @@ async def click_category(callback: CallbackQuery, widget: Select, dialog_manager
     dialog_manager.dialog_data["elements"] = _get_elem_by_id(int(item_id))
     await dialog_manager.next()
 
+
 async def click_element(callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str):
     dialog_manager.dialog_data["chosen_element"] = item_id
     await callback.answer(f"Selected element: {item_id}")
 
-#on_click ожидает функцию с определеными аргументами
+
 async def open_dialog_b(callback: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     chosen_element = dialog_manager.dialog_data.get("chosen_element")
     await dialog_manager.start(
@@ -125,8 +128,10 @@ window_a_1 = Window(
     state=DialogStateA.categories
 )
 
+
 async def getter_window_a_2(dialog_manager: DialogManager, **kwargs):
     return {"elements": dialog_manager.dialog_data.get("elements", [])}
+
 
 window_a_2 = Window(
     Const("Выберите элемент"),
@@ -146,10 +151,12 @@ window_a_2 = Window(
     state=DialogStateA.elements
 )
 
+
 async def getter_pass_start_data_to_dialog(dialog_manager: DialogManager, **kwargs):
     start_data = dialog_manager.current_context().start_data
     l_categories = start_data.get("l_categories", [])
     return {"l_categories": l_categories}
+
 
 dialog_a = Dialog(
     window_a_1,
@@ -164,11 +171,14 @@ async def getter_window_b(dialog_manager: DialogManager, **kwargs):
     chosen_element = dialog_manager.start_data.get("chosen_element", 0)
     return {"chosen_element": chosen_element}
 
+
 async def close_dialog_b(callback: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     await dialog_manager.done()
 
+
 async def open_dialog_a(callback: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     await dialog_manager.done()
+    #await dialog_manager.start(DialogStateA.categories, mode=StartMode.RESET_STACK)  это не срабатывает
 
 
 # -------------------- Dialog B Windows --------------------
