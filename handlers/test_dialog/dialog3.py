@@ -1,10 +1,11 @@
 import logging
+from datetime import datetime
 
-from aiogram import Router, Bot
+from aiogram import Router, Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import CallbackQuery, Message, InlineKeyboardButton
+from aiogram.types import CallbackQuery, Message, InlineKeyboardButton, Update, User
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram_dialog import DialogManager, StartMode, Dialog, Window
 from aiogram_dialog.widgets.kbd import Select, Group, Button, Back, Cancel
@@ -41,6 +42,7 @@ def _get_elem_by_id(id) -> list[int]:
 # ---------------------Handler States-------------------
 class HandlerState(StatesGroup):
     state_init = State()
+    restart = State()
 
 
 # -------------------- Dialog States --------------------
@@ -52,6 +54,8 @@ class DialogStateB(StatesGroup):
     window1 = State()
 
 
+
+
 # -------------------- Command Handlers --------------------
 
 async def kb_button():
@@ -61,12 +65,20 @@ async def kb_button():
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
-
 @dialog3_router.message(Command('dialog3'))
-async def start(message: Message, state: FSMContext):
-    await message.answer("Начало", reply_markup=await kb_button())
-    await state.set_state(HandlerState.state_init)
-
+@dialog3_router.callback_query(HandlerState.restart)          #чтобы вызвать функцию из диалога
+async def start(event: [Message, CallbackQuery], bot: Bot, state: FSMContext):
+    try:
+        if isinstance(event, CallbackQuery):
+            print(1)
+            message = event.message
+        else:
+            print(2)
+            message = event
+        await message.answer("Начало", reply_markup=await kb_button())
+        await state.set_state(HandlerState.state_init)
+    except Exception as e:
+        logging.error(f"Error in start: {e}")
 
 @dialog3_router.callback_query(HandlerState.state_init)
 async def handle_callback(callback: CallbackQuery, bot: Bot, state: FSMContext, dialog_manager: DialogManager):
@@ -111,10 +123,34 @@ async def open_dialog_b(callback: CallbackQuery, widget: Button, dialog_manager:
     )
 
 
+async def exit_dialog_a(callback: CallbackQuery, widget: Button, manager: DialogManager):
+    """
+    Выходим из диалога и перенаправляемся в обычный хендлер
+    """
+    try:
+        await manager.done() # Выходим из диалога
+        state: FSMContext = manager.middleware_data.get('state')
+        dp: Dispatcher = manager.middleware_data.get('dispatcher')
+
+        #Для вызова def start(event: [Message, CallbackQuery], bot: Bot, state: FSMContext)
+        # в обычном хендлере
+        await state.set_state(HandlerState.restart)
+        await dp.feed_update(callback.bot, Update(update_id=2, callback_query=callback))
+
+
+
+    except Exception as e:
+        await callback.answer("An error occurred. Please try again.")
+        logging.error(f"Error in run_start: {e}")
+
+
+
+
 # -------------------- Dialog A Windows --------------------
 
 window_a_1 = Window(
     Const("Выберите категорию"),
+    Button(Const("return to start"), id="init", on_click=exit_dialog_a),
     Group(
         Select(
             Format("{item.name}"),
