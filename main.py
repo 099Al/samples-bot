@@ -17,6 +17,8 @@ import logging
 
 from handlers.common import routers_list
 from handlers.sample.start import start_router
+from handlers.test_dialog.dialog2 import router_dialog_tst_1, dialog_2
+from handlers.test_dialog.dialog3 import dialog3_router, dialog_a, dialog_b
 from handlers.test_dialog.sample_dialog import tst_dialog_router, tst_dialog
 
 logger = logging.getLogger(__name__)
@@ -43,8 +45,15 @@ async def start():
     dp.include_router(start_router)
     routers_list(dp)           # Регистрация списка роутеров  вынесена в отдельный модуль
 
+    dp.include_router(router_dialog_tst_1)
+    dp.include_router(dialog3_router)
+
     dp.include_router(tst_dialog_router)
     dp.include_router(tst_dialog)
+
+    dp.include_router(dialog_2)
+    dp.include_router(dialog_a)
+    dp.include_router(dialog_b)
     setup_dialogs(dp)
 
     await dp.start_polling(bot, skip_updates=True)

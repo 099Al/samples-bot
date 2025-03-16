@@ -8,7 +8,10 @@ class ReqA:
     def __init__(self):
         self.session = DataBase().get_session()
 
-
+    async def get_all(self):
+        async with self.session() as session:
+            result = await session.execute(select(T_A))
+            return result.scalars().all()
 
     async def get_a(self, id):
         async with self.session() as session:
