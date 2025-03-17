@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from aiogram import Router, Bot, Dispatcher
+from aiogram import Router, Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -65,20 +65,25 @@ async def kb_button():
     kb.adjust(1)
     return kb.as_markup(resize_keyboard=True)
 
+
+#@dialog3_router.callback_query(HandlerState.restart)          #чтобы вызвать функцию из диалога
+
 @dialog3_router.message(Command('dialog3'))
-@dialog3_router.callback_query(HandlerState.restart)          #чтобы вызвать функцию из диалога
+@dialog3_router.callback_query(F.data == "SWITCH_START")
 async def start(event: [Message, CallbackQuery], bot: Bot, state: FSMContext):
     try:
         if isinstance(event, CallbackQuery):
-            print(1)
             message = event.message
         else:
-            print(2)
             message = event
         await message.answer("Начало", reply_markup=await kb_button())
         await state.set_state(HandlerState.state_init)
     except Exception as e:
         logging.error(f"Error in start: {e}")
+
+
+
+
 
 @dialog3_router.callback_query(HandlerState.state_init)
 async def handle_callback(callback: CallbackQuery, bot: Bot, state: FSMContext, dialog_manager: DialogManager):
@@ -135,7 +140,7 @@ async def exit_dialog_a(callback: CallbackQuery, widget: Button, manager: Dialog
         #Для вызова def start(event: [Message, CallbackQuery], bot: Bot, state: FSMContext)
         # в обычном хендлере
         await state.set_state(HandlerState.restart)
-        await dp.feed_update(callback.bot, Update(update_id=2, callback_query=callback))
+        await dp.feed_update(callback.bot, Update(update_id=int(callback.id)+1, callback_query=callback))
 
 
 
@@ -150,7 +155,7 @@ async def exit_dialog_a(callback: CallbackQuery, widget: Button, manager: Dialog
 
 window_a_1 = Window(
     Const("Выберите категорию"),
-    Button(Const("return to start"), id="init", on_click=exit_dialog_a),
+    Button(Const("return to start"), id="SWITCH_START", on_click=exit_dialog_a),
     Group(
         Select(
             Format("{item.name}"),
